@@ -14,11 +14,14 @@ const WaitlistModal = ({ onClose }) => {
     "Finally, where should we send your invitation?"
   ];
 
-  const handleSubmit = () => {
-    const iframe = document.createElement('iframe');
-    iframe.name = 'hidden_frame';
-    iframe.style.display = 'none';
-    document.body.appendChild(iframe);
+const handleSubmit = (e) => {
+  // We do NOT use e.preventDefault() here so the browser can bypass CORS
+  const form = e.target;
+  form.action = 'https://emailoctopus.com/lists/d2f8c170-09ec-11f1-8328-295120792464/members/embedded/1.3/add';
+  form.method = 'POST';
+  // This sends the data directly to your list
+};
+
 
     const form = document.createElement('form');
     form.target = 'hidden_frame';
