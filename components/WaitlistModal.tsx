@@ -22,7 +22,7 @@ const WaitlistModal = ({ onClose }) => {
 
     const form = document.createElement('form');
     form.target = 'hidden_frame';
-    form.action = 'https://emailoctopus.com/lists/d2f8c170-09ec-11f1-8328-295120792464/members/embedded/1.3/add';
+    form.action = 'https://script.google.com/macros/s/AKfycbx3NpDUIEYZqUwdkwX1tNK_Fpz098xf20WEwffXF97VUXMOQsbkvtYYDKlL2tjwti3gtA/exec';
     form.method = 'POST';
 
     // This is the bridge to your EmailOctopus fields
