@@ -1,215 +1,90 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-interface WaitlistModalProps {
-  onClose: () => void;
-}
+interface WaitlistModalProps { onClose: () => void; }
 
 const STEPS = [
-  {
-    key: 'RevenueGoal',
-    question: "What is your current monthly revenue goal?",
-    placeholder: "",
-    type: "text"
-  },
-  {
-    key: 'Hurdles',
-    question: "What is the biggest hurdle currently stopping you?",
-    placeholder: "",
-    type: "textarea"
-  },
-  {
-    key: 'AdBudget',
-    question: "What is your monthly ad budget?",
-    placeholder: "",
-    type: "text"
-  },
-  {
-    [span_6](start_span)key: 'field_0', // Email Field[span_6](end_span)
-    question: "Finally, where should we send your invitation?",
-    placeholder: "",
-    type: "email"
-  }
+  { key: 'field_1', question: "What is your monthly revenue goal? (Numbers only)", type: "number" },
+  { key: 'field_2', question: "What is the biggest hurdle stopping you?", type: "textarea" },
+  { key: 'field_3', question: "What is your monthly ad budget? (Numbers only)", type: "number" },
+  { key: 'field_0', question: "Where should we send your invitation?", type: "email" }
 ];
 
 const WaitlistModal: React.FC<WaitlistModalProps> = ({ onClose }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<Record<string, string>>({
-    field_0: '',
-    RevenueGoal: '',
-    Hurdles: '',
-    AdBudget: ''
+    field_0: '', field_1: '', field_2: '', field_3: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleNext = () => {
-    const currentKey = STEPS[currentStep].key;
-    if (!formData[currentKey]) return;
-    
-    if (currentStep < STEPS.length - 1) {
-      setCurrentStep(prev => prev + 1);
-    } else {
-      submitToGoogleSheet(); [span_7](start_span)// Updated to point to your Sheet[span_7](end_span)
-    }
-  };
-
-  const submitToGoogleSheet = () => {
-    setIsSubmitting(true);
-    setError(null);
-    
-    try {
-      [span_8](start_span)// Your verified Google Web App URL[span_8](end_span)
-      const ACTION_URL = "https://script.google.com/macros/s/AKfycbx3NpDUIEYZqUwdkwX1tNK_Fpz09Ixf20WEwffXF97VUXMOQsbkvtYYDKIL2tjwti3gtA/exec";
-      const frameName = `gs_frame_${Date.now()}`;
-
-      [span_9](start_span)// 1. Create hidden iframe to bypass security blocks[span_9](end_span)
-      const iframe = document.createElement('iframe');
-      iframe.name = frameName;
-      iframe.style.display = 'none';
-      document.body.appendChild(iframe);
-
-      [span_10](start_span)// 2. Create hidden form targeting the iframe[span_10](end_span)
-      const form = document.createElement('form');
-      form.action = ACTION_URL;
-      form.method = 'POST';
-      form.target = frameName;
-      form.style.display = 'none';
-
-      [span_11](start_span)// 3. Map your UI fields to the script parameters[span_11](end_span)
-      const fieldMapping: Record<string, string> = {
-        'field_0': formData.field_0,       // Email
-        'field_1': formData.RevenueGoal,   // Revenue Goal
-        'field_2': formData.Hurdles,       // Hurdles
-        'field_3': formData.AdBudget       // Ad Budget
-      };
-
-      Object.entries(fieldMapping).forEach(([name, value]) => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = name;
-        input.value = value;
-        form.appendChild(input);
-      });
-
-      document.body.appendChild(form);
-
-      [span_12](start_span)// 4. Execute the submission[span_12](end_span)
-      form.submit();
-
-      [span_13](start_span)// 5. Cleanup and show success UI[span_13](end_span)
-      setTimeout(() => {
-        setIsSuccess(true);
-        setIsSubmitting(false);
-        if (document.body.contains(form)) document.body.removeChild(form);
-        setTimeout(() => {
-          if (document.body.contains(iframe)) document.body.removeChild(iframe);
-        }, 2000);
-      }, 1000);
-
-    } catch (err) {
-      setError("Processing error. Please try again.");
-      setIsSubmitting(false);
-    }
-  };
 
   const step = STEPS[currentStep];
 
+  // Validation: Check if the answer is a valid number for numerical steps
+  const isValid = () => {
+    const value = formData[step.key];
+    if (!value) return false;
+    if (step.type === 'number') return !isNaN(Number(value)) && Number(value) >= 0;
+    return true;
+  };
+
+  const handleNext = () => {
+    if (!isValid()) return;
+    if (currentStep < STEPS.length - 1) {
+      setCurrentStep(prev => prev + 1);
+    } else {
+      submitData();
+    }
+  };
+
+  const submitData = () => {
+    setIsSubmitting(true);
+    const scriptURL = "https://script.google.com/macros/s/AKfycbx3NpDUIEYZqUwdkwX1tNK_Fpz09Ixf20WEwffXF97VUXMOQsbkvtYYDKIL2tjwti3gtA/exec";
+    const iframe = document.createElement('iframe');
+    iframe.name = "gs_frame"; iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    const form = document.createElement('form');
+    form.action = scriptURL; form.method = 'POST'; form.target = "gs_frame"; form.style.display = 'none';
+
+    Object.entries(formData).forEach(([name, value]) => {
+      const input = document.createElement('input');
+      input.type = 'hidden'; input.name = name; input.value = value;
+      form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+
+    setTimeout(() => {
+      setIsSuccess(true);
+      setIsSubmitting(false);
+      document.body.removeChild(form);
+    }, 1000);
+  };
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-        className="absolute inset-0 bg-black/90 backdrop-blur-sm"
-      />
-
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.9, opacity: 0, y: 20 }}
-        className="relative bg-zinc-900 border border-white/10 w-full max-w-md rounded-3xl p-8 shadow-2xl overflow-hidden"
-      >
-        <div className="absolute top-0 left-0 w-full h-1 bg-white/5">
-          <motion.div 
-            className="h-full bg-white shadow-[0_0_10px_#fff]"
-            initial={{ width: "0%" }}
-            animate={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }}
-          />
-        </div>
-
-        <button 
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-white text-xl"
-        >
-          &times;
-        </button>
-
-        <AnimatePresence mode="wait">
-          {!isSuccess ? (
-            <motion.div 
-              key={currentStep}
-              initial={{ x: 20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: -20, opacity: 0 }}
-              className="mt-4"
-            >
-              <h2 className="text-2xl font-bold text-white mb-6 leading-tight">
-                {step.question}
-              </h2>
-
-              {step.type === 'textarea' ? (
-                <textarea
-                  autoFocus
-                  className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-white transition-colors resize-none h-32"
-                  value={formData[step.key]}
-                  onChange={(e) => setFormData(prev => ({ ...prev, [step.key]: e.target.value }))}
-                />
-              ) : (
-                <input
-                  autoFocus
-                  type={step.type}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-white transition-colors"
-                  value={formData[step.key]}
-                  onChange={(e) => setFormData(prev => ({ ...prev, [step.key]: e.target.value }))}
-                  onKeyDown={(e) => e.key === 'Enter' && handleNext()}
-                />
-              )}
-
-              {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-
-              <button
-                disabled={isSubmitting || !formData[step.key]}
-                onClick={handleNext}
-                className="w-full bg-white text-black font-bold py-4 rounded-xl mt-8 hover:bg-gray-200 transition-all disabled:opacity-50"
-              >
-                {isSubmitting ? "Processing..." : currentStep === STEPS.length - 1 ? "Complete Application" : "Next Step"}
-              </button>
-            </motion.div>
-          ) : (
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="text-center py-12"
-            >
-              <div className="w-20 h-20 bg-white/10 text-white rounded-full flex items-center justify-center mx-auto mb-6 text-4xl">
-                ✓
-              </div>
-              <h2 className="text-3xl font-bold text-white mb-4">Application Received</h2>
-              <p className="text-gray-400 mb-8 leading-relaxed">
-                We've added you to our priority queue. Our team will review your data and reach out via email.
-              </p>
-              <button
-                onClick={onClose}
-                className="text-white font-semibold hover:underline"
-              >
-                Return to site
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90">
+      <motion.div className="bg-zinc-900 border border-white/10 w-full max-w-md rounded-3xl p-8 text-white">
+        {!isSuccess ? (
+          <div>
+            <h2 className="text-2xl font-bold mb-6">{step.question}</h2>
+            {step.type === 'textarea' ? (
+              <textarea autoFocus className="w-full bg-white/5 border border-white/10 rounded-xl p-4" value={formData[step.key]} onChange={(e) => setFormData({...formData, [step.key]: e.target.value})} />
+            ) : (
+              <input autoFocus type={step.type} className="w-full bg-white/5 border border-white/10 rounded-xl p-4" value={formData[step.key]} onChange={(e) => setFormData({...formData, [step.key]: e.target.value})} />
+            )}
+            <button disabled={!isValid() || isSubmitting} onClick={handleNext} className="w-full bg-white text-black font-bold py-4 rounded-xl mt-8 disabled:opacity-50">
+              {isSubmitting ? "Processing..." : currentStep === 3 ? "Complete" : "Next Step"}
+            </button>
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <h2 className="text-2xl font-bold mb-4">Success!</h2>
+            <p className="text-zinc-400">Data saved to Google Sheets.</p>
+            <button onClick={onClose} className="mt-6 underline">Close</button>
+          </div>
+        )}
       </motion.div>
     </div>
   );
