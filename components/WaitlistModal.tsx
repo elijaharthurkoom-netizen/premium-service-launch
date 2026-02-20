@@ -25,7 +25,7 @@ const STEPS = [
     type: "text"
   },
   {
-    key: 'field_0', // Email Field
+    [span_6](start_span)key: 'field_0', // Email Field[span_6](end_span)
     question: "Finally, where should we send your invitation?",
     placeholder: "",
     type: "email"
@@ -51,33 +51,33 @@ const WaitlistModal: React.FC<WaitlistModalProps> = ({ onClose }) => {
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
-      submitToEmailOctopus();
+      submitToGoogleSheet(); [span_7](start_span)// Updated to point to your Sheet[span_7](end_span)
     }
   };
 
-  const submitToEmailOctopus = () => {
+  const submitToGoogleSheet = () => {
     setIsSubmitting(true);
     setError(null);
     
     try {
-      // Direct EmailOctopus Action URL
-      const ACTION_URL = "https://emailoctopus.com/lists/d2f8c170-09ec-11f1-8328-295120792464/members/embedded/1.3/add";
-      const frameName = `eo_frame_${Date.now()}`;
+      [span_8](start_span)// Your verified Google Web App URL[span_8](end_span)
+      const ACTION_URL = "https://script.google.com/macros/s/AKfycbx3NpDUIEYZqUwdkwX1tNK_Fpz09Ixf20WEwffXF97VUXMOQsbkvtYYDKIL2tjwti3gtA/exec";
+      const frameName = `gs_frame_${Date.now()}`;
 
-      // 1. Create hidden iframe to bypass CORS
+      [span_9](start_span)// 1. Create hidden iframe to bypass security blocks[span_9](end_span)
       const iframe = document.createElement('iframe');
       iframe.name = frameName;
       iframe.style.display = 'none';
       document.body.appendChild(iframe);
 
-      // 2. Create hidden form
+      [span_10](start_span)// 2. Create hidden form targeting the iframe[span_10](end_span)
       const form = document.createElement('form');
       form.action = ACTION_URL;
       form.method = 'POST';
       form.target = frameName;
       form.style.display = 'none';
 
-      // 3. Map internal keys to EmailOctopus Merge Tags
+      [span_11](start_span)// 3. Map your UI fields to the script parameters[span_11](end_span)
       const fieldMapping: Record<string, string> = {
         'field_0': formData.field_0,       // Email
         'field_1': formData.RevenueGoal,   // Revenue Goal
@@ -95,10 +95,10 @@ const WaitlistModal: React.FC<WaitlistModalProps> = ({ onClose }) => {
 
       document.body.appendChild(form);
 
-      // 4. Execute the submission
+      [span_12](start_span)// 4. Execute the submission[span_12](end_span)
       form.submit();
 
-      // 5. Cleanup and transition
+      [span_13](start_span)// 5. Cleanup and show success UI[span_13](end_span)
       setTimeout(() => {
         setIsSuccess(true);
         setIsSubmitting(false);
@@ -109,7 +109,6 @@ const WaitlistModal: React.FC<WaitlistModalProps> = ({ onClose }) => {
       }, 1000);
 
     } catch (err) {
-      console.error(err);
       setError("Processing error. Please try again.");
       setIsSubmitting(false);
     }
@@ -133,7 +132,6 @@ const WaitlistModal: React.FC<WaitlistModalProps> = ({ onClose }) => {
         exit={{ scale: 0.9, opacity: 0, y: 20 }}
         className="relative bg-zinc-900 border border-white/10 w-full max-w-md rounded-3xl p-8 shadow-2xl overflow-hidden"
       >
-        {/* Progress Bar */}
         <div className="absolute top-0 left-0 w-full h-1 bg-white/5">
           <motion.div 
             className="h-full bg-white shadow-[0_0_10px_#fff]"
@@ -185,7 +183,7 @@ const WaitlistModal: React.FC<WaitlistModalProps> = ({ onClose }) => {
               <button
                 disabled={isSubmitting || !formData[step.key]}
                 onClick={handleNext}
-                className="w-full bg-white text-black font-bold py-4 rounded-xl mt-8 hover:bg-gray-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-white text-black font-bold py-4 rounded-xl mt-8 hover:bg-gray-200 transition-all disabled:opacity-50"
               >
                 {isSubmitting ? "Processing..." : currentStep === STEPS.length - 1 ? "Complete Application" : "Next Step"}
               </button>
